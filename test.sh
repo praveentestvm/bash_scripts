@@ -42,7 +42,3 @@ case "$ANSWER" in
         echo "Invalid option please choose (y/n)"
         ;;
 esac
-
-read -sp "Enter password: " PASSWORD
-echo
-echo "Password is: $PASSWORD"
