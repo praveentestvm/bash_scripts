@@ -17,7 +17,7 @@ if [[ $(which nginx) == /usr/sbin/nginx ]]; then
 else
     echo "Ngins Package is Not installed installing"
     apt install nginx -y
-    echo 
+    echo
     echo "Nginx installed at $(which nginx)"
 fi
 
