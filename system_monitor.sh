@@ -12,7 +12,9 @@ main() {
             1) service_menu ;;
             2) disk_usage ;;
             3) package_search ;;
-            q) quit ;;
+            q) quit 
+                break 
+                ;;
             *) invalid ;;
         esac
     done
@@ -96,7 +98,9 @@ service_menu() {
                     fi
                 fi
                 ;;
-            q|Q) quit ;;
+            q|Q) quit 
+                break
+                ;;
             *) invalid ;;
         esac
 
@@ -132,7 +136,9 @@ disk_usage() {
                     info "Disk usage is normal current usage is $USAGE%"
                 fi
                 ;;
-            q|Q) quit ;;
+            q|Q) quit 
+                break
+                ;;
             *)
                 invalid
                 ;;
@@ -192,7 +198,9 @@ package_search() {
                     err "Enter the correct Package name"
                 fi
                 ;;
-            q|Q) quit ;;
+            q|Q) quit 
+                break
+                ;;
             *)
                 invalid
                 ;;
@@ -239,7 +247,6 @@ succ() {
 
 quit() {
     info "quitting the script"
-    break
 }
 
 invalid() {
