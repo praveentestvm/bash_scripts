@@ -12,10 +12,7 @@ main() {
             1) service_menu ;;
             2) disk_usage ;;
             3) package_search ;;
-            q)
-                quit         
-                break
-                ;;
+            q) quit ;;
             *) invalid ;;
         esac
     done
@@ -99,10 +96,7 @@ service_menu() {
                     fi
                 fi
                 ;;
-            q|Q)
-                quit
-                break 
-                ;;
+            q|Q) quit ;;
             *) invalid ;;
         esac
 
@@ -138,10 +132,7 @@ disk_usage() {
                     info "Disk usage is normal current usage is $USAGE%"
                 fi
                 ;;
-            q|Q)
-                quit
-                break
-                ;;
+            q|Q) quit ;;
             *)
                 invalid
                 ;;
@@ -191,10 +182,6 @@ package_search() {
                     err "Failed to intall package $APT2: Please try again"
                 fi
                 ;;
-            q|Q)
-                quit
-                break
-                ;;
             o|O)
                 read -rp "Enter the package name you want to search: " online
                 echo
@@ -205,6 +192,7 @@ package_search() {
                     err "Enter the correct Package name"
                 fi
                 ;;
+            q|Q) quit ;;
             *)
                 invalid
                 ;;
@@ -251,6 +239,7 @@ succ() {
 
 quit() {
     info "quitting the script"
+    break
 }
 
 invalid() {
