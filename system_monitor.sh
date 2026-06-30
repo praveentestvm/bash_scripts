@@ -78,7 +78,7 @@ service_menu() {
                     info "$SERVICE_MENU is already enabled"
                 else
                     info "$SERVICE_MENU not enabled"
-                    if systemctl enabled "$SERVICE_MENU" 2>/dev/null; then
+                    if systemctl enable "$SERVICE_MENU" 2>/dev/null; then
                         succ "$SERVICE_MENU is enabled successfully"
                     else
                         err "Unable to enable $SERVICE_MENU"
