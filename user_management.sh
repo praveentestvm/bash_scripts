@@ -1,5 +1,5 @@
 #!/bin/bash
-#version 1.0
+#version 2.0
 main() {
     while true; do
     banner "USER MANAGEMENT"
@@ -29,20 +29,22 @@ main() {
 create_user() {
     banner "CREATE USER"
     printf "\n"
-    check "If your exist"
+    check "Before creating the user please check. Does user exist?"
     read -rp "Enter the username for checking does user exist already: " _username
-        user_check "$_username" #we are checking the username, if already exist
-        printf "\n"
-        info "User does not exist creating user, please follow the next steps"
-        read -rp "Enter the username of user: " _user
-        read -rp "Enter you Desired Password for the user: " _password
-        #Adding the user and giving the user /bin/bash shell
-        #We are assigning the password at the same time
-        if useradd -m -s /bin/bash "$_user" 2>/dev/null && echo "$_user:$_password" | chpasswd 2>/dev/null; then
-            success "User $_user is created successfully.. and the password is $_password"
+        if user_check "$_username"; then
+            info "user $_username exist, so not creating the user"
         else
-            error "Unable to create user $_user. Please try again"
-            return 1
+            info "User does not exist creating user, please follow the next steps"
+            read -rp "Enter the username of user: " _user
+            read -rp "Enter you Desired Password for the user: " _password
+            #Adding the user and giving the user /bin/bash shell
+            #We are assigning the password at the same time
+            if useradd -m -s /bin/bash "$_user" 2>/dev/null && echo "$_user:$_password" | chpasswd 2>/dev/null; then
+                success "User $_user is created successfully.. and the password is $_password"
+            else
+                error "Unable to create user $_user. Please try again"
+                return 1
+            fi
         fi
     return 0
 }
@@ -50,10 +52,9 @@ create_user() {
 delete_user() {
     banner "DELETE USER"
     printf "\n"
-    check "Before deleting the user please check. does user exist"
+    check "Before deleting the user please check. Does user exist"
     read -rp "Enter the username of the user you want to delete: " _delete_user
-    if ! user_check "$_delete_user"; then
-    info "user $_delete_user exist"
+    if user_check "$_delete_user"; then
     read -rp "Do you want to continue deleting user $_delete_user (y/n) " _delete
         case "$_delete" in
             y|Y)
@@ -69,10 +70,112 @@ delete_user() {
                 ;;
             n|N)
                 printf "You have select (n) exiting...\n"
+                exit 0
                 ;;
             *) invalid ;;
         esac
     fi
+}
+
+lock_user() {
+    banner "LOCK USER"
+    printf "\n"
+    check "Before locking the user please check. Does user exist"
+    read -rp "Enter the username of the user you want to lock: " _lockuser
+    if user_check "$_lockuser"; then
+        read -rp "Do you want to continue locking the user $_lockuser (y/n): " _lock
+        case "$_lock" in
+            y|Y)
+                warning "Locking the user $_lockuser"
+                printf "\n"
+                if passwd -l "$_lockuser" >/dev/null 2>&1; then
+                    success "user $_lockuser locked successfully.."
+                else
+                    error "unable to lock the user $_lockuser. Please try again"
+                    return 1
+                fi
+                ;;
+            n|N)
+                printf "You have selected (n) exiting...\n"
+                exit 0
+                ;;
+            *) invalid ;;
+        esac
+    fi
+}
+
+unlock_user() {
+    banner "UNLOCK USER"
+    printf "\n"
+    check "Before unlocking the user please check. Does user is locked.."
+    read -rp "Enter the username of the user you want to unlock: " _unlockuser
+    if passwd -S -a | awk '$2=="L" {print $1}' | grep -q "$_unlockuser"; then
+        warning "$_unlockuser is a locked user"
+        read -rp "Do you want to unlock (y/n): " _unlock
+        case "$_unlock" in
+            y|Y)
+                if passwd -u "$_unlockuser" >/dev/null 2>&1; then
+                    success "user $_unlockuser is unlocked successfully, you can login now"
+                else
+                    error "user $_unlockuser is unabled to unlock, please try again"
+                    return 1
+                fi
+                ;;
+            n|N)
+                printf "You have selected (n) exiting...\n"
+                exit 0
+                ;;
+            *) invalid ;;
+        esac
+    else
+        info "$_unlockuser is not a locked user. exiting ..."
+        return 0
+    fi
+}
+
+reset_password() {
+    banner "RESET PASSWORD"
+    printf "\n"
+    check "Before changing the user password please check. Does user exist?"
+    read -rp "Enter the username for checking does user exist already: " _resetusername
+        if user_check "$_resetusername"; then
+            info "user $_resetusername exist, to reset the password plese follow the next steps"
+            read -rp "Enter the username of user for resetting the password: " _resetuser
+            read -rp "Enter your desired new password for the user: " _resetpassword
+            if echo "$_resetuser:$_resetpassword" | chpasswd 2>/dev/null; then
+                success "User $_resetuser password is changed successfully.. and the password is $_resetpassword"
+            else
+                error "Unable to chage user $_resetuser password. Please try again"
+                return 1
+            fi
+        else
+            info "User does not exist"
+            return 1
+        fi
+}
+
+user_information() {
+    banner "USER INFORMATION"
+    printf "\n"
+    read -rp "Enter the username of the user you want to check the details: " _userinfo
+    local _userid
+    
+    _userid=$(id "$_userinfo")
+
+    printf "%-20s %-15s %15s\n" "UID" "GID" "GROUPS"
+    paste -d ' '\
+        <(printf '%s\n' "$_userid") 
+}
+
+list_logged_in_users() {
+    banner "LIST LOGGED IN USERS"
+    printf "\n"
+    local _logged_user
+
+    _logged_user=$(who | awk '{print $1, $2, $4}')
+    printf "%-7s %-7    s %-5s\n" "USER" "TTY" "TIME" 
+    paste -d ' '\
+        <(printf '%s\n' "$_logged_user")
 }
 
 banner(){
@@ -125,10 +228,12 @@ user_check() {
     local _username
     _username="$1"
 
-    if ! grep -q "^$_username:" /etc/passwd | cut -d ':' -f1; then
-        info "username $_username does not exist.."
+    if id "$_username" >/dev/null 2>&1; then
+        return 0
+    else
+        info "user $_username does not exist."
+        return 1
     fi
-    return 1
 }
 
 root() {
