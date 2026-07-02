@@ -1,5 +1,5 @@
 #!/bin/bash
-#version 2.0
+#version 2.1
 main() {
     while true; do
     banner "USER MANAGEMENT"
@@ -28,8 +28,11 @@ main() {
 
 create_user() {
     banner "CREATE USER"
+    local _username
+    local _user
+    local _password
     printf "\n"
-    check "Before creating the user please check. Does user exist?"
+    check "Before creating the user please check. Does user exist"
     read -rp "Enter the username for checking does user exist already: " _username
         if user_check "$_username"; then
             info "user $_username exist, so not creating the user"
@@ -51,6 +54,8 @@ create_user() {
 
 delete_user() {
     banner "DELETE USER"
+    local _delete_user
+    local _delete
     printf "\n"
     check "Before deleting the user please check. Does user exist"
     read -rp "Enter the username of the user you want to delete: " _delete_user
@@ -70,7 +75,7 @@ delete_user() {
                 ;;
             n|N)
                 printf "You have select (n) exiting...\n"
-                exit 0
+                return 0
                 ;;
             *) invalid ;;
         esac
@@ -79,6 +84,8 @@ delete_user() {
 
 lock_user() {
     banner "LOCK USER"
+    local _lockuser
+    local _lock
     printf "\n"
     check "Before locking the user please check. Does user exist"
     read -rp "Enter the username of the user you want to lock: " _lockuser
@@ -97,7 +104,7 @@ lock_user() {
                 ;;
             n|N)
                 printf "You have selected (n) exiting...\n"
-                exit 0
+                return 0
                 ;;
             *) invalid ;;
         esac
@@ -106,6 +113,8 @@ lock_user() {
 
 unlock_user() {
     banner "UNLOCK USER"
+    local _unlockuser
+    local _unlock
     printf "\n"
     check "Before unlocking the user please check. Does user is locked.."
     read -rp "Enter the username of the user you want to unlock: " _unlockuser
@@ -123,7 +132,7 @@ unlock_user() {
                 ;;
             n|N)
                 printf "You have selected (n) exiting...\n"
-                exit 0
+                return 0
                 ;;
             *) invalid ;;
         esac
@@ -135,6 +144,9 @@ unlock_user() {
 
 reset_password() {
     banner "RESET PASSWORD"
+    local _resetusername
+    local _resetuser
+    local _resetpassword
     printf "\n"
     check "Before changing the user password please check. Does user exist?"
     read -rp "Enter the username for checking does user exist already: " _resetusername
@@ -156,6 +168,7 @@ reset_password() {
 
 user_information() {
     banner "USER INFORMATION"
+    local _userinfo
     printf "\n"
     read -rp "Enter the username of the user you want to check the details: " _userinfo
     local _userid
