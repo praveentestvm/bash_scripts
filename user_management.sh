@@ -206,7 +206,7 @@ menu() {
 __print() {
     local test="$1"
     shift
-    printf "$(date "+%Y-%m-%d %H:%M:%S") [%s] %s\n" "$test" "$*"
+    printf "$(date "+%b %d %H:%M:%S") $(hostname) [%s]: %s\n" "$test" "$*"
 }
 
 error() {
