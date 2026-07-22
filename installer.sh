@@ -67,7 +67,7 @@ main() {
 }
 
 root_check() {
-    if [ "$(id -u)" != 0 ]; then
+    if (( EUID != 0 )); then
         error "you must be root or use sudo to run this script"
         exit 1
     fi
