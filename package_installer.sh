@@ -252,14 +252,17 @@ while (( $# > 0 )); do
             exit 0
             ;;
         --auto-clean)
+            root_check
             pkg_auto_clean
             shift 1
             ;;
         --auto-remove)
+            root_check
             pkg_auto_remove
             shift 1
             ;;
         --clean)
+            root_check
             pkg_clean
             shift 1
             ;;
