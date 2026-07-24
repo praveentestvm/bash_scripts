@@ -1,6 +1,7 @@
 #!/bin/bash
 
 log_file="/var/log/installer.log"
+
 log_time_stamp() {
     local timestamp
     timestamp="$(date +%c)"
