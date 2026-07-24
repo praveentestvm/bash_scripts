@@ -20,6 +20,9 @@ Usage:
   --update                    Update package lists
   --upgrade                   Upgrade installed packages
   --list-installed            List installed packages
+  --auto-clean                Removes apt cache
+  --auto-remove               Removes unused dependencies
+  --clean                     Removes all apt cache
   --help                      Show this help message
   --version                   Version information
 EOF
@@ -28,7 +31,7 @@ EOF
 version() {
     local app_name app_version author
     app_name="Package Manager"
-    app_version="1.3"
+    app_version="1.4"
     author="Praveen"
     cat << EOF
 $app_name
@@ -124,6 +127,33 @@ pkg_list() {
     fi
 }
 
+pkg_auto_clean() {
+    if apt-get autoclean >>"$log_file" 2>&1; then
+        say "apt cache have been cleared"
+    else
+        error "failed to clear apt cache for details see ($log_file)"
+        return 1
+    fi
+}
+
+pkg_clean() {
+    if apt-get clean >>"$log_file" 2>&1; then
+        say "all cached packages have been cleared"
+    else
+        error "failed to clear cached packages for details see ($log_file)"
+        return 1
+    fi
+}
+
+pkg_auto_remove() {
+    if apt-get autoremove >>"$log_file" 2>&1; then
+        say "all unused dependencies have been cleared"
+    else
+        error "failed to clear unused dependencies for details see ($log_file)"
+        return 1
+    fi
+}
+
 do_install() {
     pkg_update || return 1
 
@@ -207,6 +237,18 @@ while (( $# > 0 )); do
         --version)
             version
             exit 0
+            ;;
+        --auto-clean)
+            pkg_auto_clean
+            shift 1
+            ;;
+        --auto-remove)
+            pkg_auto_remove
+            shift 1
+            ;;
+        --clean)
+            pkg_clean
+            shift 1
             ;;
         *) 
             invalid "$1"
