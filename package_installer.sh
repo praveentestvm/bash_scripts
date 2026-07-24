@@ -15,15 +15,28 @@ usage() {
     cat << EOF
 Usage:
   --install <package>         Install a package
+                              --install nginx
+
   --remove <package>          Remove a package
+                              --remove nginx
+
   --purge <package>           Remove a package and its configuration files
+                              --purge nginx
+
   --update                    Update package lists
+
   --upgrade                   Upgrade installed packages
+  
   --list-installed            List installed packages
+  
   --auto-clean                Removes apt cache
+  
   --auto-remove               Removes unused dependencies
+  
   --clean                     Removes all apt cache
+  
   --help                      Show this help message
+  
   --version                   Version information
 EOF
 }
