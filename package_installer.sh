@@ -47,9 +47,8 @@ version() {
     app_version="1.4"
     author="Praveen"
     cat << EOF
-$app_name
-Version     : $app_version 
-Author      : $author
+$app_name $app_version
+Copyright (c) 2026 $author
 EOF
 }
 
@@ -191,9 +190,10 @@ error() {
     __print ERROR "$@"
 }
 
+script_name="$(basename "$0")"
 if (( $# == 0 )); then
-    printf "%s\n" "usage: $0 --options"
-    printf "%s\n" "for details use $0 [--help]"
+    printf "%s\n" "Usage: $script_name [--options]..."
+    printf "%s\n" "Try '$script_name --help' for more information"
     exit 1
 fi
 
