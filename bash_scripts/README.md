@@ -1,5 +1,19 @@
-# Learning Repository
+# Bash Scripting
 
-A collection of scripts, notes, and projects created while learning Linux administration, Bash scripting, automation, and related technologies.
+This directory contains the Bash scripts I have written while learning Linux and shell scripting.
 
-This repository serves as a record of my learning progress and a place to store and revisit work as my skills continue to develop.
+Each script is part of my hands-on practice and focuses on solving real-world administration or automation tasks. As I continue learning, I revisit these projects to improve code quality, add new features, and apply better scripting practices.
+
+## What you'll find
+
+* Linux automation scripts
+* System administration utilities
+* Package installation and management scripts
+* System monitoring tools
+* Practice projects and experiments
+
+## Purpose
+
+The goal of these projects is to strengthen my understanding of Bash scripting by writing scripts from scratch, debugging issues, and continuously improving them instead of simply following tutorials.
+
+These scripts represent my learning journey, so you may notice different coding styles or approaches as my knowledge grows over time.
