@@ -590,11 +590,11 @@ need_cmd() {
     fi
 }
 
-
+scriptname="$(basename "$0")"
 if [[ "$#" = 0 ]]; then
-    echo "usage $0 --options"
+    echo "usage $scriptname --options"
     echo
-    echo "for details use $0 [-h|--help]"
+    echo "for details use $scriptname [-h|--help]"
     exit 1
 fi
 
