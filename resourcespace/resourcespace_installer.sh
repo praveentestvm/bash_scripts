@@ -7,7 +7,8 @@ set -e
 APP_NAME="Resourcespace Installer"
 APP_VERSION="1.0.0"
 AUTHOR="Praveen"
-LOG_FILE="$(pwd)/resourcespace-installer.log"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_FILE="$SCRIPT_DIR/resourcespace-installer.log"
 
 readonly APP_NAME
 readonly APP_VERSION
