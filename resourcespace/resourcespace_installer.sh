@@ -555,7 +555,7 @@ __print() {
 
     local message
     message=$(printf "%s %s [%s]: %s\n" \
-    "$(date "+%c")" \
+    "$(date +%c)" \
     "$SCRIPT_HOSTNAME" \
     "$level" \
     "$*")
