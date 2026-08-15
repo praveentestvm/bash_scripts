@@ -48,7 +48,7 @@ usage:
 
 [Options]
 
---root-pass <root-password>     specify root password (default: $ROOT_PASS)
+--root-password <root-password>     specify root password (default: $ROOT_PASS)
 --db-name <database name>       specify database name (default: $DB_NAME)
 --db-user <database username>   specify database username (default: $DB_USER)
 --db-password <database user    specify database password
