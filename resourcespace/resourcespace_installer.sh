@@ -266,7 +266,7 @@ cat << EOF > "$apache_file"
 </VirtualHost>
 EOF
     if a2ensite resourcespace.conf >> "$LOG_FILE"; then
-        say "config file resourcespace.conf if enabled successfully"
+        say "config file 'resourcespace.conf' if enabled successfully"
         info "disabling & removing default file 000-default.conf"
         if [ -f /etc/apache2/sites-available/000-default.conf ]; then
             if a2dissite 000-default.conf >> "$LOG_FILE"; then
@@ -283,7 +283,7 @@ EOF
             fi
         fi
     else
-        error "failed to enable resourcespace.conf config file"
+        error "failed to enable 'resourcespace.conf' config file"
         return 1
     fi
     
