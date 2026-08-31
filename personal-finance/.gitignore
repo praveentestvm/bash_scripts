@@ -1,0 +1,14 @@
+# Environment-specific configuration and secrets
+/config.php
+/.env
+/.env.*
+!/.env.example
+
+# Composer dependencies
+/vendor/
+
+# Runtime/debug files
+*.log
+*.bak
+*.swp
+.DS_Store

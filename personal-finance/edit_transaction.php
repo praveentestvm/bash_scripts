@@ -1,0 +1,17 @@
+<?php
+require_once __DIR__.'/includes/bootstrap.php';requireLogin();$id=(int)($_GET['id']??$_POST['id']??0);$pdo=db();$s=$pdo->prepare('SELECT * FROM transactions WHERE id=? AND user_id=? LIMIT 1');$s->execute([$id,currentUserId()]);$t=$s->fetch();if(!$t){http_response_code(404);exit('Transaction not found.');}$errors=[];
+if($_SERVER['REQUEST_METHOD']==='POST'){verify_csrf();$type=$_POST['type']??'';$cid=(int)($_POST['category_id']??0);$amount=(float)($_POST['amount']??0);$payment=$_POST['payment_method']??'';$desc=trim((string)($_POST['description']??''));$date=$_POST['transaction_date']??'';
+if(!in_array($type,['income','expense'],true))$errors[]='Invalid type.';if($amount<=0)$errors[]='Amount must be greater than zero.';if(!in_array($payment,['cash','debit_card','credit_card'],true))$errors[]='Invalid payment method.';if(!validDate($date))$errors[]='Invalid date.';
+$s=$pdo->prepare('SELECT id FROM categories WHERE id=? AND type=? AND is_active=1');$s->execute([$cid,$type]);if(!$s->fetch())$errors[]='Invalid category.';
+if(!$errors){$s=$pdo->prepare('UPDATE transactions SET category_id=?,amount=?,type=?,payment_method=?,description=?,transaction_date=? WHERE id=? AND user_id=?');$s->execute([$cid,$amount,$type,$payment,$desc?:null,$date,$id,currentUserId()]);flash('success','Transaction updated.');redirect('view_transactions.php');}
+$t=array_merge($t,['category_id'=>$cid,'amount'=>$amount,'type'=>$type,'payment_method'=>$payment,'description'=>$desc,'transaction_date'=>$date]);}
+$s=$pdo->prepare('SELECT id,name FROM categories WHERE type=? AND is_active=1 ORDER BY name');$s->execute([$t['type']]);$cats=$s->fetchAll();
+$pageTitle='Edit Transaction';include __DIR__.'/includes/header.php';
+?>
+<div class="card narrow-card"><h1>Edit Transaction</h1><?php foreach($errors as $e1): ?><div class="alert error"><?= e($e1) ?></div><?php endforeach; ?><form method="post" id="transaction-form" data-category-url="<?= e(url('api/categories.php')) ?>"><?= csrf_field() ?><input type="hidden" name="id" value="<?= e($id) ?>">
+<label>Type<select name="type" id="transaction-type"><option value="expense" <?= $t['type']==='expense'?'selected':'' ?>>Expense</option><option value="income" <?= $t['type']==='income'?'selected':'' ?>>Income</option></select></label>
+<label>Category<select name="category_id" id="transaction-category"><?php foreach($cats as $c): ?><option value="<?= e($c['id']) ?>" <?= (int)$t['category_id']===(int)$c['id']?'selected':'' ?>><?= e($c['name']) ?></option><?php endforeach; ?></select></label>
+<label>Amount (₹)<input type="number" step="0.01" min="0.01" name="amount" value="<?= e($t['amount']) ?>" required></label><label>Date<input type="date" name="transaction_date" value="<?= e($t['transaction_date']) ?>" required></label>
+<fieldset><legend>Payment Method</legend><label class="radio"><input type="radio" name="payment_method" value="cash" <?= $t['payment_method']==='cash'?'checked':'' ?>> Cash</label><label class="radio"><input type="radio" name="payment_method" value="debit_card" <?= $t['payment_method']==='debit_card'?'checked':'' ?>> Debit Card</label><label class="radio"><input type="radio" name="payment_method" value="credit_card" <?= $t['payment_method']==='credit_card'?'checked':'' ?>> Credit Card</label></fieldset>
+<label>Description<textarea name="description" maxlength="500" rows="4"><?= e($t['description']??'') ?></textarea><button type="submit" class="btn primary full">Update Transaction</button></form></div>
+<?php include __DIR__.'/includes/footer.php'; ?>

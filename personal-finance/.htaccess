@@ -1,0 +1,14 @@
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(?:config|default-config)\.php$">
+        Require all denied
+    </FilesMatch>
+
+    <FilesMatch "^(?:composer\.(?:json|lock)|.*\.bak|.*\.log)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+RewriteEngine On
+RewriteRule ^(?:\.git|database|includes)(?:/|$) - [F,L,NC]

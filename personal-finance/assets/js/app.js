@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('form').forEach(form=>form.addEventListener('submit',()=>{const b=form.querySelector('button[type="submit"],button:not([type])');if(b&&!form.classList.contains('inline')){b.disabled=true;b.dataset.originalText=b.textContent;b.textContent='Please wait…';}}));});
