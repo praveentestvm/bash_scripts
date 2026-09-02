@@ -1,8 +1,0 @@
-<?php
-require_once __DIR__.'/includes/bootstrap.php';requireLogin();$pdo=db();$y=(int)($_POST['year']??$_GET['year']??date('Y'));$m=(int)($_POST['month']??$_GET['month']??date('n'));$errors=[];
-if($_SERVER['REQUEST_METHOD']==='POST'){verify_csrf();$amount=(float)($_POST['amount']??0);if($amount<0)$errors[]='Budget cannot be negative.';if($m<1||$m>12)$errors[]='Invalid month.';if(!$errors){$s=$pdo->prepare('INSERT INTO budgets(user_id,year,month,amount) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE amount=VALUES(amount)');$s->execute([currentUserId(),$y,$m,$amount]);flash('success','Budget saved.');redirect('budget.php?year='.$y.'&month='.$m);}}
-$s=$pdo->prepare('SELECT amount FROM budgets WHERE user_id=? AND year=? AND month=?');$s->execute([currentUserId(),$y,$m]);$current=(float)($s->fetchColumn()?:0);
-$pageTitle='Budget';include __DIR__.'/includes/header.php';
-?>
-<div class="card narrow-card"><h1>Monthly Budget</h1><?php foreach($errors as $e1): ?><div class="alert error"><?= e($e1) ?></div><?php endforeach; ?><form method="post"><?= csrf_field() ?><label>Year<input type="number" name="year" value="<?= e($y) ?>" min="2000" max="2100"></label><label>Month<select name="month"><?php for($i=1;$i<=12;$i++): ?><option value="<?= $i ?>" <?= $i===$m?'selected':'' ?>><?= e(date('F',mktime(0,0,0,$i,1))) ?></option><?php endfor; ?></select></label><label>Spending Cap (₹)<input type="number" step="0.01" min="0" name="amount" value="<?= e($current) ?>" required></label><button type="submit" class="btn primary full">Save Budget</button></form></div>
-<?php include __DIR__.'/includes/footer.php'; ?>
