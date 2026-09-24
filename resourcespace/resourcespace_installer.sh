@@ -5,7 +5,7 @@
 
 set -e
 APP_NAME="Resourcespace Installer"
-APP_VERSION="1.0.0"
+APP_VERSION="1.1.0"
 AUTHOR="Praveen"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="$SCRIPT_DIR/resourcespace-installer.log"
@@ -16,13 +16,14 @@ readonly AUTHOR
 readonly LOG_FILE
 
 ACTION=""
-ROOT_PASS="root@123"
 DB_NAME="resourcespace"
 DB_USER="resourcespace_rw"
 DB_PASS="$(tr -cd 'a-z' </dev/urandom | head -c 10)"
 RESOURCESPACE_VERSION="11.0"
 WEB_DIR="/var/www/html/resourcespace"
 FILESTORE_DIR="$WEB_DIR/filestore"
+ENV="$SCRIPT_DIR/.env"
+
 version(){
     cat << EOF
 $APP_NAME
@@ -35,25 +36,16 @@ usage() {
     cat << EOF
 usage:
 -i, --install           installs all the required packages and configures apache php mysql
-
--r, --uninstall         uninstall all the installed packages, and dependencies of the
-                        resourcespace, and removes source code of the resourcespace, and
-                        removes filestore, and database as well
-
--u, --upgrade           upgrades the current version to latest version
-
-
 -h, --help              displays help page
 -v, --version           gives version information
 
 [Options]
 
---root-password <root-password>     specify root password (default: $ROOT_PASS)
 --db-name <database name>       specify database name (default: $DB_NAME)
 --db-user <database username>   specify database username (default: $DB_USER)
 --db-password <database user    specify database password
     password>                   this is random password changes each time
-                                specify so you don't get into trouble (random: $DB_PASS)
+                                specify so you don't get into trouble (for password check .env)
     
 --download-version <version     specify version (defautl: $RESOURCESPACE_VERSION)
     of resourcespace>
@@ -81,7 +73,10 @@ do_install() {
     apache_config
     
     #Configuring mysql
-    mysql_config
+    if mysql_config; then
+        touch "$ENV"
+        echo "MYSQL USER PASSWORD = $DB_PASS" > "$ENV"
+    fi
 }
 
 REQUIRED_PACKAGES=(
@@ -91,7 +86,7 @@ REQUIRED_PACKAGES=(
         subversion
         inkscape
         ghostscript
-        postfix
+        #postfix (for those who want to setup smtp server, you can uncomment and delete this entire line leaving 'postfix')
         libimage-exiftool-perl
         cron
         wget
@@ -154,24 +149,18 @@ install_packages() {
 
 download_resourcespace() {
     local url
-    local revision
 
     url="https://svn.resourcespace.com/svn/rs/releases/${RESOURCESPACE_VERSION}"
-    revision="$(svn info "$WEB_DIR" | grep "^Revision" | cut -d ' ' -f2)"
+    create_web_dir
 
-    create_web_dir || return 0
-
-    if svn info "$WEB_DIR" >> "$LOG_FILE" 2>&1; then
-        info "A valid svn repo found, current revision is ($revision)"
+    if svn co -q "$url" "$WEB_DIR" >> "$LOG_FILE" 2>&1; then
+        info "resourcespace code is downloaded in the path '$WEB_DIR'"
+        create_filestore_dir
     else
-        if svn co -q "$url" "$WEB_DIR" >> "$LOG_FILE" 2>&1; then
-            info "resourcespace code is downloaded in the path '$WEB_DIR'"
-            create_filestore_dir
-        else
-            error "failed to download Resourcespace code in the path '$WEB_DIR'"
-            return 1
-        fi
+        error "failed to download Resourcespace code in the path '$WEB_DIR'"
+        return 1
     fi
+    
     change_owner
 }
 
@@ -189,11 +178,14 @@ change_owner() {
 
 create_web_dir() {
     if [ ! -d "$WEB_DIR" ]; then
-        mkdir -p "$WEB_DIR"
-        say "directory $WEB_DIR is created successfully, downloading the required files"
+        if mkdir -p "$WEB_DIR"; then
+            say "directory $WEB_DIR is created successfully, downloading the required files"
+        else
+            error "failed to create directory '$WEB_DIR'"
+            return 1
+        fi
     else
-        error "failed to create directory $WEB_DIR"
-        return 1
+        info "'$WEB_DIR' already exists"
     fi
 }
 
@@ -237,23 +229,7 @@ cat << EOF > "$apache_file"
         Options -Indexes
     </Directory>
 
-    <Directory $WEB_DIR/batch>
-        Require all denied
-    </Directory>
-
     <Directory $WEB_DIR/include>
-        Require all denied
-    </Directory>
-
-    <Directory $WEB_DIR/upgrade>
-        Require all denied
-    </Directory>
-
-    <Directory $WEB_DIR/languages>
-        Require all denied
-    </Directory>
-
-    <Directory $WEB_DIR/tests>
         Require all denied
     </Directory>
 
@@ -298,13 +274,13 @@ EOF
         say "'$web' service is restarted successfully"
     else
         error "failed to restart '$web' service"
+        return 1
     fi
 }
 
 mysql_config() {
-    local db
-    local mysql_cmd
-
+    local db mysql_cmd timer
+    timer=5
 
     db="mysql.service"
     services "$db"
@@ -313,14 +289,18 @@ mysql_config() {
         info "connected to mysql using auth_socket"
         mysql_cmd=(mysql)
     else
-        warning "mysql root requires a password"
-        if mysql -u root -p"$ROOT_PASS" -e "SELECT 1;" >/dev/null 2>&1; then
-            say "successfully authenticated as mysql root"
-            mysql_cmd=(mysql -u root -p"$ROOT_PASS")
-        else
-            error "failed to authenticate with mysql as root"
-            return 1
-        fi
+        while true; do
+            warning "mysql root requires a password, please enter root password to continue in $timer sec..."
+            sleep "$timer"
+            if mysql -u root -p -e "SELECT 1;" >/dev/null 2>&1; then
+                say "successfully authenticated as mysql root"
+                mysql_cmd=(mysql -u root -p)
+                break
+            else
+                error "failed to authenticate with mysql as root exiting script"
+                return 1
+            fi
+        done
     fi
     
     if "${mysql_cmd[@]}" -N -e \
@@ -351,7 +331,7 @@ EOF
         then
             say "database '$DB_NAME' created successfully"
             say "database user '$DB_USER' created successfully"
-            say "databas user password is '$DB_PASS' you can leave it or you can change it later installation"
+            say "check '.env' file for database user password"
         else
             error "failed to configure mysql. check $LOG_FILE for details"
             return 1
@@ -406,147 +386,6 @@ php_config() {
     fi
 }
 
-version_le() {
-    [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -n 1)" == "$1" ]]
-}
-
-version_ge() {
-    [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n 1)" == "$1" ]]
-}
-
-version_check() {
-    current_ver="$(awk -F'"' '/productversion/ {split($2, a, " "); print a[2]}' "${WEB_DIR}"/include/version.php)"
-    latest_ver="$(svn ls https://svn.resourcespace.com/svn/rs/releases/ | cut -d '/' -f1 | sort -V | tail -n 1)"
-    if [[ "$current_ver" == "$latest_ver" ]]; then
-        info "resourcespace is already running on the latest version ($current_ver)"
-        return 2
-    fi
-
-    if version_le "$current_ver" "9.8"; then
-        warning "Versions below 10.0 are currently not supported by this installer."
-        info "resourcespace database has changed pre v.10 we will support for the same soon"
-        return 1
-    fi
-
-    if version_ge "$current_ver" "10.0"; then
-        info "your current version $current_ver can be upgraded to $latest_ver"
-        return 0
-    fi
-}
-
-svn_diff() {
-    if [ ! -d "$WEB_DIR/.svn" ]; then
-        warning "$WEB_DIR is not an svn working copy"
-        return 1
-    fi
-
-    [[ ! -f "$WEB_DIR/diff.txt" ]]; {
-        touch "$WEB_DIR/diff.txt"
-    }
-
-    svn diff > "$WEB_DIR/diff.txt" >>"$LOG_DIR" 2>&1
-    if [[ -s "$WEB_DIR/diff.txt" ]] >>"$LOG_FILE" 2>&1; then
-        info "local modifications have been saved at $WEB_DIR/diff.txt"
-    else
-        rm -f "$WEB_DIR/diff.txt"
-        info "no local modifications detected"
-    fi
-}
-
-svn_upgrade() {
-    svn cleanup >>"$LOG_FILE" 2>&1 || {
-        error "failed to clean svn working copy"
-        return 1
-    }
-    
-    if svn switch "^/releases/${latest_ver}" >>"$LOG_FILE" 2>&1; then
-        say "your current version $current_ver is successfully upgraded to $latest_ver"
-    else
-        warning "failed to upgrade your current version $current_ver to $latest_ver"
-        info "for more details check $LOG_FILE"
-        return 1
-    fi
-}
-
-do_upgrade() {
-
-    if [ "$(pwd)" != "$WEB_DIR" ]; then
-        cd "$WEB_DIR" || return 1
-    fi
-
-    #before upgrading we check current installed version
-    #if the current installed version is below 10.0 we exit
-    #the script as database tables and schema was changed
-    #after v.10.0 so we only upgrade versions are above 10.0
-    version_check
-    case "$?" in
-        0) ;;
-        1) return 1 ;;
-        2) return 0 ;;
-    esac
-
-    #after version check, we check any local code changes
-    #if any code is changed locally we save this into a file
-    #so they cannot loose the code changed locally after 
-    #svn switch
-    svn_diff || return 1
-
-    #the actual upgrade happens now, from the current installed
-    #version to the latest or user specific version
-    svn_upgrade || return 1
-}
-
-uninstall_packages() {
-    local package
-
-    for package in "${REQUIRED_PACKAGES[@]}"; do
-        if apt --purge autoremove -y "$package" >>"$LOG_FILE" 2>&1; then
-            info "$package package is uninstalled successfully"
-        else
-            error "failed to uninstall package $package"
-            continue 1
-        fi
-    done
-
-    apt autopurge -y >>"$LOG_FILE" 2>&1
-    apt autoremove -y >>"$LOG_FILE" 2>&1
-    apt autoclean -y >>"$LOG_FILE" 2>&1
-}
-
-DIRECTORIES=(
-    "$WEB_DIR"
-    /var/log/mysql/
-)
-check_directory_leftovers() {
-    if [[ -d "$1" ]]; then
-        info "found a leftover directory $1"
-        return 0
-    fi
-    return 1
-}
-
-remove_leftovers() {
-    local dir
-
-    for dir in "${DIRECTORIES[@]}"; do
-        if check_directory_leftovers "$dir"; then
-            rm -rf -- "$dir"
-            info "removed directory $dir"
-        else
-            error "failed to delete directory $dir"
-            return 1
-       fi
-    done
-}
-
-do_uninstall() {
-    #uninstlling all the installed packages
-    uninstall_packages
-
-    #removing all the leftovers
-    remove_leftovers
-}
-
 SCRIPT_HOSTNAME="$(hostname)"
 #SERVER_IP="$(hostname -I | awk '{print $1}')"
 
@@ -581,16 +420,6 @@ warning() {
     __print WARNING "$@"
 }
 
-check_command() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-need_cmd() {
-    if ! check_command "$1"; then
-        warning "need '$1' (command not found)"
-    fi
-}
-
 scriptname="$(basename "$0")"
 if [[ "$#" = 0 ]]; then
     echo "usage $scriptname --options"
@@ -604,6 +433,17 @@ root_check() {
         error "this script must be run by root or use sudo or 'sudo -i'"
     exit 1
     fi
+}
+
+validate_value() {
+    local value option
+    option="$1"
+    value="$2"
+    [[ -n "$value" && "$value" != -* ]] || {
+        error "$option requires value"
+        exit 1
+    }
+    
 }
 
 #Check if running on linux
@@ -627,14 +467,6 @@ while [[ $# -gt 0 ]]; do
             ACTION="install"
             shift 1
             ;;
-        -r|--uninstall)
-            ACTION="uninstall"
-            shift 1
-            ;;
-        -u|--upgrade)
-            ACTION="upgrade"
-            shift 1
-            ;;
         -v|--version)
             version
             exit 0
@@ -644,51 +476,29 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         --web-dir)
+            validate_value "--web-dir" "$2"
             WEB_DIR="$2"
-                [[ -n "$2" && "$2" != -* ]] || {
-                    error "--web-dir requires a value"
-                    exit 1
-                }
+            FILESTORE_DIR="$WEB_DIR/filestore"
             shift 2
             ;;
         --download-version)
+            validate_value "--download-version" "$2"
             RESOURCESPACE_VERSION="$2"
-                [[ -n "$2" && "$2" != -* ]] || {
-                    error "--download-verion requires a value"
-                    exit 1
-                }
-            shift 2
-            ;;
-        --root-password)
-            ROOT_PASS="$2"
-                [[ -n "$2" && "$2" != -* ]] || {
-                    error "--root-password requires a value"
-                    exit 1
-                }
             shift 2
             ;;
         --db-name)
+            validate_value "--db-name" "$2"
             DB_NAME="$2"
-                [[ -n "$2" && "$2" != -* ]] || {
-                    error "--db-name requries a value"
-                    exit 1
-                }
             shift 2
             ;;
         --db-user)
+            validate_value "--db-user" "$2"
             DB_USER="$2"
-                [[ -n "$2" && "$2" != -* ]] || {
-                    error "--db-user requires a value"
-                    exit 1
-                }
             shift 2
             ;;
         --db-password)
+            validate_value "--db-password" "$2"
             DB_PASS="$2"
-                [[ -n "$2" && "$2" != -* ]] || {
-                    error "--db-password requires a value"
-                    exit 1  
-                }
             shift 2
             ;;
         *)
@@ -697,19 +507,12 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-    
+
 case "$ACTION" in
     install)
         do_install
         ;;
-    upgrade)
-        do_upgrade
-        ;;
-    uninstall)
-        do_uninstall
-        ;;
     *)
-        echo "Invalid option Please choose the correct one"
-        exit 1
+        echo "Invalid option"
         ;;
 esac
