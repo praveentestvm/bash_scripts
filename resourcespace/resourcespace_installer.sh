@@ -247,12 +247,6 @@ EOF
         if [ -f /etc/apache2/sites-available/000-default.conf ]; then
             if a2dissite 000-default.conf >> "$LOG_FILE"; then
                 say "default config file is disabled successfully"
-                if rm /etc/apache2/sites-available/000-default.conf >> "$LOG_FILE"; then
-                    say "default config file is removed successfully"
-                else
-                    error "failed to remove default config file"
-                    return 1
-                fi
             else
                 error "failed to disable default config file"
                 return 1
