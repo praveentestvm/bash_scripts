@@ -11,14 +11,14 @@ if [ -f /etc/os-release ]; then
     source /etc/os-release
 elif [ -f /usr/lib/os-release ]; then
     source /usr/lib/os-release
-    if [ "$NAME" != "Ubuntu" ] || [ "$ID" != "ubuntu" ]; then
-        warning "this script currently supports only ubuntu"
-        warning "your server is '$NAME'"
-        exit 1
-    fi
 else
     warning "we didn't found file 'os-release' in '/etc/' or  '/usr/lib/'"
     exit 1
+fi
+if [ "$NAME" != "Ubuntu" ] || [ "$ID" != "ubuntu" ]; then
+        warning "this script currently supports only ubuntu"
+        warning "your server is '$NAME'"
+        exit 1
 fi
 source "${scriptdir}"/lib/commonfunctions.sh
 mainmenu
