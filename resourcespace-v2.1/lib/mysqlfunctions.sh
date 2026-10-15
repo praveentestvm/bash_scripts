@@ -39,7 +39,7 @@ mysqlconfig() {
     else
         if "${mysql_cmd[@]}" -e "CREATE USER IF NOT EXISTS '${dbuser}'@'localhost' IDENTIFIED BY '${dbpass}';"; then
             info "user '$dbuser created successfully'"
-            if "{mysql_cmd[@]}" -e "GRANT ALL PRIVILEGES ON ${dbname}.* TO '${dbuser}'@'localhost';"; then
+            if "${mysql_cmd[@]}" -e "GRANT ALL PRIVILEGES ON ${dbname}.* TO '${dbuser}'@'localhost';"; then
                 info "privileges is updated to the user '$dbuser'"
             else
                 error "failed to grant privileges to the user '$dbuser'"
