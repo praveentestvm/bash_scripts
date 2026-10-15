@@ -27,20 +27,26 @@ mysqlconfig() {
     if "${mysql_cmd[@]}" -e "SHOW DATABASES;" | grep -Fqx "$dbname"; then
         info "database '$dbname' already exists"
     else
-        if "${mysql_cmd[@]}" -e "SELECT User FROM mysql.user WHERE User='${dbuser}' AND Host='localhost';" | grep -Fqx "$dbuser"; then
-            info "user '$dbuser' already exists"
-        else
-            if "${mysql_cmd[@]}" -e "CREATE USER IF NOT EXISTS '${dbuser}'@'localhost' IDENTIFIED BY '${dbpass}';"; then
-                info "user '$dbuser created successfully'"
-            else
-                error "failed to created user '$dbuser'"
-                return 1
-            fi
-        fi
-        if "${mysql_cmd[@]}" -e "CREATE DATABASE IF NOT EXISTS ${dbname} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON ${dbname}.* TO '${dbuser}'@'localhost';"; then
+        if "${mysql_cmd[@]}" -e "CREATE DATABASE IF NOT EXISTS ${dbname} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"; then
             info "created database '$dbname' successfully"
         else
             error "failed to create database '$dbname'"
+            return 1
+        fi
+    fi
+    if "${mysql_cmd[@]}" -e "SELECT User FROM mysql.user WHERE User='${dbuser}' AND Host='localhost';" | grep -Fqx "$dbuser"; then
+        info "user '$dbuser' already exists"
+    else
+        if "${mysql_cmd[@]}" -e "CREATE USER IF NOT EXISTS '${dbuser}'@'localhost' IDENTIFIED BY '${dbpass}';"; then
+            info "user '$dbuser created successfully'"
+            if "{mysql_cmd[@]}" -e "GRANT ALL PRIVILEGES ON ${dbname}.* TO '${dbuser}'@'localhost';"; then
+                info "privileges is updated to the user '$dbuser'"
+            else
+                error "failed to grant privileges to the user '$dbuser'"
+                return 1
+            fi
+        else
+            error "failed to created user '$dbuser'"
             return 1
         fi
     fi
