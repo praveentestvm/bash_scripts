@@ -48,3 +48,27 @@ You will be guided through a few quick configuration prompts
 
 MENU
 }
+usage(){
+    cat << USAGE
+Resourcespace Installer 2.1
+
+Usage: $scriptname [OPTIONS]
+
+Options:
+    -h, --help
+            Print help
+    --db-name
+            specify database name
+    --db-user
+            specify database username
+    --db-password
+            specify database password
+            specified password will be saved in $envfile
+    --download-version
+            specify download version
+            default version downloaded will be the 
+            latest version available at the time of
+            running this scirpt else specify exactly how
+            resourcespace expects like (10.0, 10.1, 10.7, 11.0)
+USAGE
+}
