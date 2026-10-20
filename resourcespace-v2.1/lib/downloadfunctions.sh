@@ -3,7 +3,7 @@ changeowner() {
     local directory
     directory="$1"
     info "changing user and group to 'www-data'"
-    if chown -R 33:33 "$directory" >> "$logfile" 2>&1; then
+    if chown -R www-data:www-data "$directory" >> "$logfile" 2>&1; then
         info "user and group of '$directory' changed to 'www-data'"
     else
         error "failed to change user and group of '$directory' to 'www-data' for details see ($logfile)"
