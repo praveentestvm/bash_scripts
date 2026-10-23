@@ -4,7 +4,6 @@ envfile="$scriptdir/.env"
 logfile="$scriptdir/resourcespace.log"
 scriptname="$(basename "$0")"
 latest_version="11.0"
-default_web_dir="/var/www/html/resourcespace"
 source "${scriptdir}"/lib/logfunctions.sh
 if [ "$EUID" != 0 ]; then
     warning "you must use 'sudo' or 'sudo -i' or become root to run this script"
@@ -64,7 +63,7 @@ else
                     error "--download-version requires value"
                     exit 1
                 }
-                if [[ "$2" =~ ^[0-9]+\.[0-9]$ ]]; then
+                if [[ "$2" =~ ^[0-9]+\.[0.9]$ ]]; then
                     highest="$(printf '%s\n' "$latest_version" "$2" | sort -V | tail -n 1)"
                     if [[ "$highest" == "$latest_version" ]]; then
                         downloadversion="$2"
@@ -88,17 +87,17 @@ else
         esac
     done
 fi
-[[ ! -z "$databasename" ]] || {
+[[ -n "$databasename" ]] || {
     error "--db-name must used and cannot be empty"
 }
-[[ ! -z "$databaseuser" ]] || {
+[[ -n "$databaseuser" ]] || {
     error "--db-user must be used and cannot be empty"
 }
-[[ ! -z "$databasepassword" ]] || {
+[[ -n "$databasepassword" ]] || {
     error "--db-password must used and cannot be empty"
     exit 1
 }
-[[ -z "$downloadversion" ]] && downloadversion="11.0"
+[[ -z "$downloadversion" ]] && downloadversion="$latest_version"
 mainmenu
 source "${scriptdir}"/lib/mysqlfunctions.sh
 if command -v mysql >/dev/null 2>&1; then
