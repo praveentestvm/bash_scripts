@@ -1,9 +1,6 @@
 #!/bin/bash
-#This is one of my real project where i have to download n number of pdf's
-#and move them to their respective folder and split them into jpg
-#for every pdf there will be uniqe link i have to download for now i managed
-#to build this, i try to automate totally.
-
+# Just got an idea how to replace or remove if statements, this is an 
+# experiement of removing the if statements
 __print() {
     local level print_date
     print_date="$(date "+%c")"
@@ -25,45 +22,24 @@ dir() {
     directory="$1"
     file="$2"
     jpg="$1/JPG"
-
-    if mkdir -p "$directory"; then
-        success "'$directory' directory created successfully"
-        if mkdir -p "$jpg"; then
-            success "'$jpg' sub-directory created successfully"
-        else
-            error "'$jpg' failed to created sub-directory"
-        fi
-    else
-        error "'$directory' failed to created directory"
-        return 1
-    fi
-
-    if mv "$file" "$directory"; then
-        success "'$file' moved successfully to the directory '$directory'"
-    else
-        error "'$file' failed to move to the directory '$directory'"
-        return 1
-    fi
+    { mkdir -p "$directory" && success "'$directory' directory created successfully"; } || { error "'$directory' failed to created directory" && return 1; }
+    { mkdir -p "$jpg" && success "'$jpg' sub-directory created successfully"; } || { error "'$jpg' failed to created sub-directory" && return 1; }
+    { mv "$file" "$directory" && success "'$file' moved successfully to the directory '$directory'"; } || { error "'$file' failed to move to the directory '$directory'" && return 1; }
 }
 
 downloader() {
-    local link file_name create_directory
+    local link file_name create_directory destination
     link="$1"
     file_name="$2"
     create_directory="$3"
-
-    if curl -fsS "$link" -o "$file_name"; then
-        success "'$file_name' downloaded successfully"
-        dir "$create_directory" "$file_name"
-    else
-        error "'$file_name' failed to download"
-        return 1
-    fi 
+    destination="$create_directory/$file_name"
+    { [[ -f "$destination" ]] && success "file exists at the directory '$destination'"; } || {
+    { curl -fsS "$link" -o "$file_name" && success "'$file_name' downloaded successfully" && dir "$create_directory" "$file_name"; } || { error "'$file_name' failed to download" && return 1; }
+    }
 }
 
 main() {
-    downloader "#url here" "#file name here" "#folder name here"
+    downloader "url here" "filename here" "directory name here"
 }
 
 main
-
