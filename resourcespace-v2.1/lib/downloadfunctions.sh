@@ -45,15 +45,15 @@ createfilestoredirectory() {
 downloadresourcespace() {
     local url
     url="https://svn.resourcespace.com/svn/rs/releases/${downloadversion}"
-    createwebdirectory
+    createwebdirectory || return 1
     if svn info "$webdirectory" >> "$logfile" 2>&1; then
         info "a valid svn repo found, for details check ($logfile)"
         return 0
     else
         if svn co "$url" "$webdirectory"; then
             info "resourcespace source code is downloaded successfully at '$webdirectory'"
-            changeowner "$webdirectory"
-            createfilestoredirectory
+            changeowner "$webdirectory" || return 1
+            createfilestoredirectory || return 1
         else
             error "failed to download resourcespace source code at '$webdirectory' for details see ($logfile)"
             return 1
