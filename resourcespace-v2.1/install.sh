@@ -63,7 +63,7 @@ else
                     error "--download-version requires value"
                     exit 1
                 }
-                if [[ "$2" =~ ^[0-9]+\.[0.9]$ ]]; then
+                if [[ "$2" =~ ^[0-9]+\.[0-9]$ ]]; then
                     highest="$(printf '%s\n' "$latest_version" "$2" | sort -V | tail -n 1)"
                     if [[ "$highest" == "$latest_version" ]]; then
                         downloadversion="$2"
