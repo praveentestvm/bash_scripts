@@ -4,7 +4,7 @@ __print() {
     level="$1"
     shift
     message="$(printf "%s [%s]: %s\n" \
-        "$(hostname)" \
+        "$(date "+%c")" \
         "$level" \
         "$*")"
 
