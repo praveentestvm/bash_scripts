@@ -89,9 +89,11 @@ else
 fi
 [[ -n "$databasename" ]] || {
     error "--db-name must used and cannot be empty"
+    exit 1
 }
 [[ -n "$databaseuser" ]] || {
     error "--db-user must be used and cannot be empty"
+    exit 1
 }
 [[ -n "$databasepassword" ]] || {
     error "--db-password must used and cannot be empty"
